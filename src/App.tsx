@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import './App.css'
 import { MoleculeViewer } from './MoleculeViewer'
+import { StylePanel } from './StylePanel'
+import { DEFAULT_SCENE, type SceneConfig } from './scene'
 
 function App() {
   // The ID currently rendered, and the editable input value (kept separate so
   // typing doesn't trigger a reload on every keystroke — only on submit).
   const [pdbId, setPdbId] = useState('1CRN')
   const [inputValue, setInputValue] = useState('1CRN')
+  const [scene, setScene] = useState<SceneConfig>(DEFAULT_SCENE)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +33,10 @@ function App() {
           <button type="submit">Load</button>
         </form>
       </header>
-      <MoleculeViewer pdbId={pdbId} />
+      <div className="body">
+        <StylePanel scene={scene} onChange={setScene} />
+        <MoleculeViewer pdbId={pdbId} scene={scene} />
+      </div>
     </div>
   )
 }
