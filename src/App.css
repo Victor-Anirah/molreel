@@ -272,3 +272,30 @@
   background: var(--accent);
   border-color: var(--accent);
 }
+
+.seg-btn-sm:disabled,
+.play-btn:disabled,
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.control-spacer {
+  flex: 1 1 auto;
+}
+
+.export-btn {
+  padding: 0.5rem 1.2rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #1a8a4a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 9rem;
+}
+
+.export-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
