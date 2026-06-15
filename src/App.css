@@ -206,3 +206,69 @@
 .viewer-overlay--error {
   background: #b00020;
 }
+
+/* Bottom animation control bar */
+.controlbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.play-btn {
+  padding: 0.5rem 1.2rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 6rem;
+}
+
+.play-btn:hover {
+  filter: brightness(1.08);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.control-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.seg-inline {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.seg-btn-sm {
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.seg-btn-sm:hover {
+  border-color: var(--accent);
+}
+
+.seg-btn-sm.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}

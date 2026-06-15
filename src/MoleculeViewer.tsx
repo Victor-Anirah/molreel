@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as $3Dmol from '3dmol'
 import { applyScene, type SceneConfig } from './scene'
+import { angleAt, type AnimationConfig } from './animation'
 
 type Status = 'loading' | 'ready' | 'error'
 
@@ -9,6 +10,10 @@ interface MoleculeViewerProps {
   pdbId: string
   /** How to draw the structure. */
   scene: SceneConfig
+  /** Animation timeline settings. */
+  animation: AnimationConfig
+  /** Whether the animation is currently playing. */
+  isPlaying: boolean
 }
 
 /**
@@ -16,7 +21,12 @@ interface MoleculeViewerProps {
  * Loading the structure (on `pdbId` change) and styling it (on `scene` change)
  * are kept separate so restyling never refetches or resets the camera.
  */
-export function MoleculeViewer({ pdbId, scene }: MoleculeViewerProps) {
+export function MoleculeViewer({
+  pdbId,
+  scene,
+  animation,
+  isPlaying,
+}: MoleculeViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<$3Dmol.GLViewer | null>(null)
   const modelLoadedRef = useRef(false)
@@ -92,6 +102,32 @@ export function MoleculeViewer({ pdbId, scene }: MoleculeViewerProps) {
     if (!viewer || !modelLoadedRef.current) return
     applyScene(viewer, scene)
   }, [scene])
+
+  // Drive playback. We apply incremental Y-rotation deltas (target − previous),
+  // so the spin continues smoothly from wherever the model currently sits and
+  // loops seamlessly. The same angleAt() timeline powers frame export later.
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || !isPlaying) return
+
+    let raf = 0
+    let startTime = 0
+    let prevAngle = 0
+
+    const loop = (now: number) => {
+      if (startTime === 0) startTime = now
+      const elapsed = (now - startTime) % animation.durationMs
+      const t = elapsed / animation.durationMs
+      const target = angleAt(animation, t)
+      viewer.rotate(target - prevAngle, 'y')
+      prevAngle = target
+      viewer.render()
+      raf = requestAnimationFrame(loop)
+    }
+
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [isPlaying, animation])
 
   return (
     <div className="viewer-wrap">
