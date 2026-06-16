@@ -3,7 +3,7 @@ import './App.css'
 import { MoleculeViewer, type MoleculeViewerHandle } from './MoleculeViewer'
 import { StylePanel } from './StylePanel'
 import { AnimationControls } from './AnimationControls'
-import { downloadBlob } from './exporter'
+import { downloadBlob, type ExportFormat } from './exporter'
 import { DEFAULT_SCENE, type SceneConfig } from './scene'
 import { DEFAULT_ANIMATION, type AnimationConfig } from './animation'
 
@@ -16,6 +16,7 @@ function App() {
   const [animation, setAnimation] = useState<AnimationConfig>(DEFAULT_ANIMATION)
   const [isPlaying, setIsPlaying] = useState(false)
   const [maxEdge, setMaxEdge] = useState(720)
+  const [format, setFormat] = useState<ExportFormat>('gif')
   const [exportProgress, setExportProgress] = useState<number | null>(null)
 
   const viewerRef = useRef<MoleculeViewerHandle>(null)
@@ -31,8 +32,8 @@ function App() {
     setIsPlaying(false)
     setExportProgress(0)
     try {
-      const blob = await viewerRef.current.exportAnimation(maxEdge, setExportProgress)
-      downloadBlob(blob, `${pdbId.toLowerCase()}_${animation.type}.gif`)
+      const blob = await viewerRef.current.exportAnimation(format, maxEdge, setExportProgress)
+      downloadBlob(blob, `${pdbId.toLowerCase()}_${animation.type}.${format}`)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Export failed.')
     } finally {
@@ -74,6 +75,8 @@ function App() {
         onChange={setAnimation}
         maxEdge={maxEdge}
         onMaxEdgeChange={setMaxEdge}
+        format={format}
+        onFormatChange={setFormat}
         onExport={handleExport}
         exportProgress={exportProgress}
       />

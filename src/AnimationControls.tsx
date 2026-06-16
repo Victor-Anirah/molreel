@@ -1,10 +1,13 @@
 import { ANIMATION_TYPES, SPEEDS, type AnimationConfig } from './animation'
+import type { ExportFormat } from './exporter'
 
 const RESOLUTIONS: { label: string; maxEdge: number }[] = [
   { label: 'SD', maxEdge: 480 },
   { label: 'HD', maxEdge: 720 },
   { label: 'Full', maxEdge: 1080 },
 ]
+
+const FORMATS: ExportFormat[] = ['gif', 'mp4']
 
 interface AnimationControlsProps {
   isPlaying: boolean
@@ -13,6 +16,8 @@ interface AnimationControlsProps {
   onChange: (animation: AnimationConfig) => void
   maxEdge: number
   onMaxEdgeChange: (maxEdge: number) => void
+  format: ExportFormat
+  onFormatChange: (format: ExportFormat) => void
   onExport: () => void
   exportProgress: number | null
 }
@@ -24,6 +29,8 @@ export function AnimationControls({
   onChange,
   maxEdge,
   onMaxEdgeChange,
+  format,
+  onFormatChange,
   onExport,
   exportProgress,
 }: AnimationControlsProps) {
@@ -83,10 +90,26 @@ export function AnimationControls({
         </div>
       </div>
 
+      <div className="control-group">
+        <span className="control-label">Format</span>
+        <div className="seg-inline">
+          {FORMATS.map((f) => (
+            <button
+              key={f}
+              className={`seg-btn-sm${format === f ? ' active' : ''}`}
+              onClick={() => onFormatChange(f)}
+              disabled={exporting}
+            >
+              {f.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button className="export-btn" onClick={onExport} disabled={exporting}>
         {exporting
           ? `Rendering ${Math.round((exportProgress ?? 0) * 100)}%`
-          : '⬇ Export GIF'}
+          : `⬇ Export ${format.toUpperCase()}`}
       </button>
     </div>
   )

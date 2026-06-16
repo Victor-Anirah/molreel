@@ -2,13 +2,21 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import * as $3Dmol from '3dmol'
 import { applyScene, type SceneConfig } from './scene'
 import { angleAt, type AnimationConfig } from './animation'
-import { createGifSink, loadImage, rasterize } from './exporter'
+import {
+  createGifSink,
+  createMp4Sink,
+  drawToCanvas,
+  loadImage,
+  scaledSize,
+  type ExportFormat,
+} from './exporter'
 
 type Status = 'loading' | 'ready' | 'error'
 
 export interface MoleculeViewerHandle {
-  /** Render the animation frame-by-frame and encode it to a GIF Blob. */
+  /** Render the animation frame-by-frame and encode it to a GIF/MP4 Blob. */
   exportAnimation: (
+    format: ExportFormat,
     maxEdge: number,
     onProgress: (fraction: number) => void,
   ) => Promise<Blob>
@@ -141,7 +149,7 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
     // Expose frame-by-frame export. Steps the SAME angleAt() timeline used for
     // playback, so the GIF matches the preview by construction.
     useImperativeHandle(ref, () => ({
-      async exportAnimation(maxEdge, onProgress) {
+      async exportAnimation(format, maxEdge, onProgress) {
         const viewer = viewerRef.current
         if (!viewer || !modelLoadedRef.current) {
           throw new Error('Load a structure before exporting.')
@@ -154,29 +162,56 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
           Math.max(12, Math.round((anim.durationMs / 1000) * fps)),
         )
         const delayMs = Math.round(1000 / fps)
-        const sink = createGifSink()
-        let prevAngle = 0
 
-        for (let i = 0; i < frames; i++) {
-          const t = i / frames
-          const target = angleAt(anim, t)
-          viewer.rotate(target - prevAngle, 'y')
-          prevAngle = target
-          viewer.render()
+        // Render at the full target resolution during export. On-screen the
+        // viewer is only CSS-pixel sized, so capturing it directly looks soft;
+        // here we drive the canvas up to `maxEdge` (long edge), preserving the
+        // current aspect ratio so the framing is unchanged.
+        const domCanvas = viewer.getCanvas()
+        const curW = domCanvas.width || domCanvas.clientWidth || 1
+        const curH = domCanvas.height || domCanvas.clientHeight || 1
+        const aspect = curW / curH
+        const renderW = aspect >= 1 ? maxEdge : Math.round(maxEdge * aspect)
+        const renderH = aspect >= 1 ? Math.round(maxEdge / aspect) : maxEdge
 
-          const img = await loadImage(viewer.pngURI())
-          const { rgba, width, height } = rasterize(img, maxEdge, background)
-          sink.addFrame(rgba, width, height, delayMs)
-
-          onProgress((i + 1) / frames)
-          // Yield so the progress overlay can repaint between frames.
-          await new Promise((r) => setTimeout(r, 0))
-        }
-
-        // Restore the original orientation so the live view is unchanged.
-        viewer.rotate(-prevAngle, 'y')
+        viewer.setWidth(renderW)
+        viewer.setHeight(renderH)
         viewer.render()
-        return sink.finish()
+
+        let prevAngle = 0
+        try {
+          // Lock the output dimensions up front (even-sized for H.264).
+          const probe = await loadImage(viewer.pngURI())
+          const { width, height } = scaledSize(probe, maxEdge, format === 'mp4')
+
+          const sink =
+            format === 'mp4'
+              ? await createMp4Sink(width, height, fps)
+              : createGifSink(delayMs)
+
+          for (let i = 0; i < frames; i++) {
+            const t = i / frames
+            const target = angleAt(anim, t)
+            viewer.rotate(target - prevAngle, 'y')
+            prevAngle = target
+            viewer.render()
+
+            const img = await loadImage(viewer.pngURI())
+            const canvas = drawToCanvas(img, width, height, background)
+            sink.addFrame(canvas, i)
+
+            onProgress((i + 1) / frames)
+            // Yield so the progress overlay can repaint between frames.
+            await new Promise((r) => setTimeout(r, 0))
+          }
+          return await sink.finish()
+        } finally {
+          // Restore the original orientation and snap the canvas back to its
+          // on-screen (container) size.
+          viewer.rotate(-prevAngle, 'y')
+          viewer.resize()
+          viewer.render()
+        }
       },
     }))
 
@@ -190,8 +225,10 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
           <div className="viewer-overlay viewer-overlay--error">{error}</div>
         )}
         {exportProgress !== null && (
-          <div className="viewer-overlay">
-            Rendering GIF… {Math.round(exportProgress * 100)}%
+          <div className="viewer-cover">
+            <div className="viewer-cover__text">
+              Rendering… {Math.round(exportProgress * 100)}%
+            </div>
           </div>
         )}
       </div>

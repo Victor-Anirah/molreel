@@ -207,6 +207,23 @@
   background: #b00020;
 }
 
+/* Full-cover overlay during export (hides the high-res resize) */
+.viewer-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 5;
+}
+
+.viewer-cover__text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
 /* Bottom animation control bar */
 .controlbar {
   display: flex;
