@@ -1,3 +1,4 @@
+import { Download, Pause, Play } from 'lucide-react'
 import { ANIMATION_TYPES, SPEEDS, type AnimationConfig } from './animation'
 import type { ExportFormat } from './exporter'
 
@@ -38,8 +39,14 @@ export function AnimationControls({
 
   return (
     <div className="controlbar">
-      <button className="play-btn" onClick={onTogglePlay} disabled={exporting}>
-        {isPlaying ? '⏸ Pause' : '▶ Play'}
+      <button
+        className="play-btn"
+        onClick={onTogglePlay}
+        disabled={exporting}
+        data-tip="Play / pause (Space)"
+      >
+        {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+        {isPlaying ? 'Pause' : 'Play'}
       </button>
 
       <div className="control-group">
@@ -106,10 +113,16 @@ export function AnimationControls({
         </div>
       </div>
 
-      <button className="export-btn" onClick={onExport} disabled={exporting}>
+      <button
+        className="export-btn"
+        onClick={onExport}
+        disabled={exporting}
+        data-tip={`Download a ${format.toUpperCase()} of the animation`}
+      >
+        {!exporting && <Download size={16} />}
         {exporting
           ? `Rendering ${Math.round((exportProgress ?? 0) * 100)}%`
-          : `⬇ Export ${format.toUpperCase()}`}
+          : `Export ${format.toUpperCase()}`}
       </button>
     </div>
   )

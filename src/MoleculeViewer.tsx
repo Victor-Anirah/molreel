@@ -220,7 +220,10 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
 
     return (
       <div className="viewer-wrap">
-        <div ref={containerRef} className="viewer-canvas" />
+        <div
+          ref={containerRef}
+          className={`viewer-canvas${status === 'ready' ? ' ready' : ''}`}
+        />
         {status === 'loading' && (
           <div className="viewer-overlay">Loading {sourceLabel(source)}…</div>
         )}

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Upload } from 'lucide-react'
 import type { StructureSource } from './structureSource'
 
 const EXAMPLES: { id: string; label: string }[] = [
@@ -61,7 +62,9 @@ export function SourceBar({ onLoad }: SourceBarProps) {
           type="button"
           className="upload-btn"
           onClick={() => fileRef.current?.click()}
+          data-tip="Upload your own .pdb / .cif file"
         >
+          <Upload size={15} />
           Upload
         </button>
         <input
