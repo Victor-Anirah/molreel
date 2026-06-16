@@ -7,7 +7,8 @@
 .topbar {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
   padding: 0.75rem 1.25rem;
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
@@ -20,13 +21,30 @@
   color: var(--text-h);
 }
 
+.sourcebar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
 .loader {
   display: flex;
   gap: 0.5rem;
 }
 
+.source-type {
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
 .loader input {
-  width: 16rem;
+  width: 14rem;
   padding: 0.45rem 0.7rem;
   font: inherit;
   border: 1px solid var(--border);
@@ -35,7 +53,8 @@
   color: var(--text-h);
 }
 
-.loader input:focus {
+.loader input:focus,
+.source-type:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -53,6 +72,44 @@
 
 .loader button:hover {
   filter: brightness(1.08);
+}
+
+.loader .upload-btn {
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.loader .upload-btn:hover {
+  border-color: var(--accent);
+  filter: none;
+}
+
+.examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.examples-label {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.example-chip {
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.example-chip:hover {
+  border-color: var(--accent);
 }
 
 /* Main body: sidebar + viewer */

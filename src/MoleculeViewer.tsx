@@ -10,6 +10,12 @@ import {
   scaledSize,
   type ExportFormat,
 } from './exporter'
+import {
+  resolveStructure,
+  sourceKey,
+  sourceLabel,
+  type StructureSource,
+} from './structureSource'
 
 type Status = 'loading' | 'ready' | 'error'
 
@@ -23,8 +29,8 @@ export interface MoleculeViewerHandle {
 }
 
 interface MoleculeViewerProps {
-  /** 4-character RCSB PDB ID, e.g. "1CRN" or "4HHB". */
-  pdbId: string
+  /** Where the structure comes from (PDB / AlphaFold / uploaded file). */
+  source: StructureSource
   /** How to draw the structure. */
   scene: SceneConfig
   /** Animation timeline settings. */
@@ -41,7 +47,7 @@ interface MoleculeViewerProps {
  * are kept separate so restyling never refetches or resets the camera.
  */
 export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerProps>(
-  function MoleculeViewer({ pdbId, scene, animation, isPlaying, exportProgress }, ref) {
+  function MoleculeViewer({ source, scene, animation, isPlaying, exportProgress }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
     const viewerRef = useRef<$3Dmol.GLViewer | null>(null)
     const modelLoadedRef = useRef(false)
@@ -50,6 +56,8 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
     sceneRef.current = scene
     const animationRef = useRef(animation)
     animationRef.current = animation
+    const sourceRef = useRef(source)
+    sourceRef.current = source
 
     const [status, setStatus] = useState<Status>('loading')
     const [error, setError] = useState('')
@@ -76,26 +84,21 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
       }
     }, [])
 
-    // Load a structure whenever the PDB ID changes.
+    // Load a structure whenever the source changes.
     useEffect(() => {
       const viewer = viewerRef.current
-      const id = pdbId.trim().toUpperCase()
-      if (!viewer || !id) return
+      if (!viewer) return
 
       let cancelled = false
       modelLoadedRef.current = false
       setStatus('loading')
       setError('')
 
-      fetch(`https://files.rcsb.org/download/${id}.pdb`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`No structure found for "${id}".`)
-          return res.text()
-        })
-        .then((pdbData) => {
+      resolveStructure(sourceRef.current)
+        .then(({ data, format }) => {
           if (cancelled) return
           viewer.clear()
-          viewer.addModel(pdbData, 'pdb')
+          viewer.addModel(data, format)
           applyScene(viewer, sceneRef.current)
           viewer.zoomTo()
           viewer.render()
@@ -111,7 +114,7 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
       return () => {
         cancelled = true
       }
-    }, [pdbId])
+    }, [sourceKey(source)])
 
     // Re-apply styling when the scene changes (no refetch, no camera reset).
     useEffect(() => {
@@ -219,7 +222,7 @@ export const MoleculeViewer = forwardRef<MoleculeViewerHandle, MoleculeViewerPro
       <div className="viewer-wrap">
         <div ref={containerRef} className="viewer-canvas" />
         {status === 'loading' && (
-          <div className="viewer-overlay">Loading {pdbId.toUpperCase()}…</div>
+          <div className="viewer-overlay">Loading {sourceLabel(source)}…</div>
         )}
         {status === 'error' && (
           <div className="viewer-overlay viewer-overlay--error">{error}</div>

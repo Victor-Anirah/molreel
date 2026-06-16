@@ -3,15 +3,14 @@ import './App.css'
 import { MoleculeViewer, type MoleculeViewerHandle } from './MoleculeViewer'
 import { StylePanel } from './StylePanel'
 import { AnimationControls } from './AnimationControls'
+import { SourceBar } from './SourceBar'
 import { downloadBlob, type ExportFormat } from './exporter'
 import { DEFAULT_SCENE, type SceneConfig } from './scene'
 import { DEFAULT_ANIMATION, type AnimationConfig } from './animation'
+import { sourceBaseName, type StructureSource } from './structureSource'
 
 function App() {
-  // The ID currently rendered, and the editable input value (kept separate so
-  // typing doesn't trigger a reload on every keystroke — only on submit).
-  const [pdbId, setPdbId] = useState('1CRN')
-  const [inputValue, setInputValue] = useState('1CRN')
+  const [source, setSource] = useState<StructureSource>({ kind: 'pdb', id: '1CRN' })
   const [scene, setScene] = useState<SceneConfig>(DEFAULT_SCENE)
   const [animation, setAnimation] = useState<AnimationConfig>(DEFAULT_ANIMATION)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -21,19 +20,13 @@ function App() {
 
   const viewerRef = useRef<MoleculeViewerHandle>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const id = inputValue.trim()
-    if (id) setPdbId(id)
-  }
-
   const handleExport = async () => {
     if (!viewerRef.current) return
     setIsPlaying(false)
     setExportProgress(0)
     try {
       const blob = await viewerRef.current.exportAnimation(format, maxEdge, setExportProgress)
-      downloadBlob(blob, `${pdbId.toLowerCase()}_${animation.type}.${format}`)
+      downloadBlob(blob, `${sourceBaseName(source)}_${animation.type}.${format}`)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Export failed.')
     } finally {
@@ -45,23 +38,13 @@ function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">MolReel</div>
-        <form className="loader" onSubmit={handleSubmit}>
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="PDB ID — e.g. 1CRN, 4HHB"
-            spellCheck={false}
-            autoComplete="off"
-            aria-label="PDB ID"
-          />
-          <button type="submit">Load</button>
-        </form>
+        <SourceBar onLoad={setSource} />
       </header>
       <div className="body">
         <StylePanel scene={scene} onChange={setScene} />
         <MoleculeViewer
           ref={viewerRef}
-          pdbId={pdbId}
+          source={source}
           scene={scene}
           animation={animation}
           isPlaying={isPlaying}
