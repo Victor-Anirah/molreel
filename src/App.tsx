@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 import { MoleculeViewer, type MoleculeViewerHandle } from './MoleculeViewer'
 import { StylePanel } from './StylePanel'
@@ -183,6 +184,7 @@ function App() {
         exportProgress={exportProgress}
       />
       <Toasts toasts={toasts} onDismiss={dismissToast} />
+      <Analytics />
     </div>
   )
 }

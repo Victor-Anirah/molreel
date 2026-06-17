@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# MolReel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Protein structure animations, without the PyMOL pain.**
 
-Currently, two official plugins are available:
+Load a protein structure in your browser, style it, and export a clean GIF or MP4 animation — or just *describe* the animation in plain English (type or speak) and let AI build the scene.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+🔗 **Live:** [molreel.vercel.app](https://molreel.vercel.app)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What it does
 
-## Expanding the ESLint configuration
+- **Load any structure** — by PDB ID, by AlphaFold UniProt ID, or upload your own `.pdb` / `.cif` file.
+- **Style it** — representations (cartoon, surface, sticks, spheres, lines), color schemes (rainbow, by chain, secondary structure, B-factor / pLDDT confidence, solid), backgrounds, and tasteful presets.
+- **Animate** — smooth turntable spin or gentle rock, with speed control.
+- **Export** — a looping **GIF** or **MP4**, rendered at full resolution. This is the part PyMOL makes painful.
+- **Describe it with AI** ✨ — type or **speak** a sentence ("color by chain, dark background, slow spin") and it builds the scene for you.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Vite + React + TypeScript**
+- **[3Dmol.js](https://3dmol.csb.pitt.edu/)** for WebGL molecular rendering
+- **gifenc** (GIF) + **WebCodecs / mp4-muxer** (MP4) for in-browser export
+- **Web Speech API** for voice input
+- **Claude** (`claude-opus-4-8`, structured outputs) via a serverless function for the describe-to-scene feature
+- Deployed on **Vercel**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Run locally
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The AI feature needs an Anthropic API key. Copy `.env.example` to `.env.local` and add yours:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# .env.local
+ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+(Without a key, everything except the ✨ AI feature works.)
+
+## Build
+
+```bash
+npm run build   # type-check + production build
+```
+
+---
+
+Built in public. Structures from the [RCSB PDB](https://www.rcsb.org/) and [AlphaFold DB](https://alphafold.ebi.ac.uk/).
