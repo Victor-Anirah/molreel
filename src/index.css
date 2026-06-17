@@ -42,6 +42,7 @@ body,
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
+  overflow-x: hidden;
 }
 
 /* Smooth, consistent micro-interactions on every interactive element. */
