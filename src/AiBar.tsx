@@ -22,6 +22,11 @@ type SpeechRecognitionLike = {
   onerror: ((e: any) => void) | null
 }
 
+// How long the user can stay silent before we treat them as "done" and submit.
+const SILENCE_MS = 3000
+// A longer grace period after pressing the mic, before any speech starts.
+const START_GRACE_MS = 6000
+
 function createRecognition(): SpeechRecognitionLike | null {
   const Ctor =
     (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -29,8 +34,8 @@ function createRecognition(): SpeechRecognitionLike | null {
   const rec: SpeechRecognitionLike = new Ctor()
   rec.lang = 'en-US'
   rec.interimResults = true
-  // Stops automatically when the user pauses — that pause is our "done talking".
-  rec.continuous = false
+  // Keep listening across pauses; we decide when "done" via a silence timer.
+  rec.continuous = true
   return rec
 }
 
@@ -39,12 +44,29 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
   const [supported, setSupported] = useState(true)
   const recRef = useRef<SpeechRecognitionLike | null>(null)
   const finalRef = useRef('')
+  const silenceRef = useRef<number | null>(null)
+
+  const clearSilence = () => {
+    if (silenceRef.current !== null) {
+      clearTimeout(silenceRef.current)
+      silenceRef.current = null
+    }
+  }
+
+  // Restart the "done talking" countdown; firing it stops recognition.
+  const armSilence = (ms: number) => {
+    clearSilence()
+    silenceRef.current = window.setTimeout(() => recRef.current?.stop?.(), ms)
+  }
 
   useEffect(() => {
     setSupported(
       !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition),
     )
-    return () => recRef.current?.abort?.()
+    return () => {
+      clearSilence()
+      recRef.current?.abort?.()
+    }
   }, [])
 
   const startListening = () => {
@@ -67,19 +89,25 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
       }
       if (final) finalRef.current = `${finalRef.current} ${final}`.trim()
       onChange(`${finalRef.current} ${interim}`.trim())
+      armSilence(SILENCE_MS) // reset the countdown every time we hear something
     }
-    rec.onerror = () => setListening(false)
+    rec.onerror = () => {
+      clearSilence()
+      setListening(false)
+    }
     rec.onend = () => {
+      clearSilence()
       setListening(false)
       const text = finalRef.current.trim()
       if (text) {
         onChange(text)
-        onGenerate(text) // auto-generate when speech ends
+        onGenerate(text) // auto-generate once the user is done talking
       }
     }
 
     setListening(true)
     rec.start()
+    armSilence(START_GRACE_MS) // generous window to actually start speaking
   }
 
   const toggleMic = () => {
@@ -102,7 +130,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={
           listening
-            ? 'Listening… say what you want'
+            ? 'Listening… say what you want, then pause when done'
             : 'Describe the animation — type it or tap the mic'
         }
         disabled={loading}
@@ -115,7 +143,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
           onClick={toggleMic}
           disabled={loading}
           aria-label={listening ? 'Stop listening' : 'Speak your description'}
-          data-tip={listening ? 'Listening… tap to stop' : 'Speak your description'}
+          data-tip={listening ? 'Listening… tap when done' : 'Speak your description'}
           data-tip-pos="below"
         >
           <Mic size={16} />
