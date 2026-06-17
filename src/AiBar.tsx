@@ -116,6 +116,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
           disabled={loading}
           aria-label={listening ? 'Stop listening' : 'Speak your description'}
           data-tip={listening ? 'Listening… tap to stop' : 'Speak your description'}
+          data-tip-pos="below"
         >
           <Mic size={16} />
           {listening ? 'Listening' : 'Speak'}

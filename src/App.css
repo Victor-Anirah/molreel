@@ -630,6 +630,13 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* Tooltips that should drop below (for controls near the top of the page). */
+[data-tip-pos='below']::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+}
+
 /* ---- Toasts ---- */
 .toasts {
   position: fixed;

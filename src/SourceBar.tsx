@@ -63,6 +63,7 @@ export function SourceBar({ onLoad }: SourceBarProps) {
           className="upload-btn"
           onClick={() => fileRef.current?.click()}
           data-tip="Upload your own .pdb / .cif file"
+          data-tip-pos="below"
         >
           <Upload size={15} />
           Upload
