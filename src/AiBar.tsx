@@ -23,8 +23,9 @@ type SpeechRecognitionLike = {
 }
 
 // How long the user can stay silent before we treat them as "done" and submit.
-// The on-screen countdown bar is synced to this exact duration.
-const SILENCE_MS = 3500
+// Generous so people can gather their thoughts mid-sentence; the on-screen
+// countdown bar is synced to this, and they can always tap to send early.
+const SILENCE_MS = 6000
 
 function createRecognition(): SpeechRecognitionLike | null {
   const Ctor =
@@ -133,7 +134,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={
           listening
-            ? 'Listening… say what you want, then pause when done'
+            ? 'Listening… speak freely, pause to think, then tap to send'
             : 'Describe the animation — type it or tap the mic'
         }
         disabled={loading}
