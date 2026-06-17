@@ -23,9 +23,8 @@ type SpeechRecognitionLike = {
 }
 
 // How long the user can stay silent before we treat them as "done" and submit.
-const SILENCE_MS = 3000
-// A longer grace period after pressing the mic, before any speech starts.
-const START_GRACE_MS = 6000
+// The on-screen countdown bar is synced to this exact duration.
+const SILENCE_MS = 3500
 
 function createRecognition(): SpeechRecognitionLike | null {
   const Ctor =
@@ -34,7 +33,7 @@ function createRecognition(): SpeechRecognitionLike | null {
   const rec: SpeechRecognitionLike = new Ctor()
   rec.lang = 'en-US'
   rec.interimResults = true
-  // Keep listening across pauses; we decide when "done" via a silence timer.
+  // Keep listening across pauses; we decide when "done" via the silence timer.
   rec.continuous = true
   return rec
 }
@@ -42,6 +41,9 @@ function createRecognition(): SpeechRecognitionLike | null {
 export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
   const [listening, setListening] = useState(false)
   const [supported, setSupported] = useState(true)
+  // Bumped every time we (re)start the silence countdown — remounts the bar so
+  // its CSS animation restarts from empty.
+  const [countdownKey, setCountdownKey] = useState(0)
   const recRef = useRef<SpeechRecognitionLike | null>(null)
   const finalRef = useRef('')
   const silenceRef = useRef<number | null>(null)
@@ -54,9 +56,10 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
   }
 
   // Restart the "done talking" countdown; firing it stops recognition.
-  const armSilence = (ms: number) => {
+  const armSilence = () => {
     clearSilence()
-    silenceRef.current = window.setTimeout(() => recRef.current?.stop?.(), ms)
+    setCountdownKey((k) => k + 1)
+    silenceRef.current = window.setTimeout(() => recRef.current?.stop?.(), SILENCE_MS)
   }
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
       }
       if (final) finalRef.current = `${finalRef.current} ${final}`.trim()
       onChange(`${finalRef.current} ${interim}`.trim())
-      armSilence(SILENCE_MS) // reset the countdown every time we hear something
+      armSilence() // reset the countdown every time we hear something
     }
     rec.onerror = () => {
       clearSilence()
@@ -107,7 +110,7 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
 
     setListening(true)
     rec.start()
-    armSilence(START_GRACE_MS) // generous window to actually start speaking
+    armSilence() // start the countdown immediately
   }
 
   const toggleMic = () => {
@@ -153,6 +156,16 @@ export function AiBar({ value, onChange, onGenerate, loading }: AiBarProps) {
       <button className="aibar-btn" type="submit" disabled={loading || !value.trim()}>
         {loading ? 'Generating…' : 'Generate'}
       </button>
+
+      {listening && (
+        <div className="mic-countdown" aria-hidden>
+          <div
+            key={countdownKey}
+            className="mic-countdown-fill"
+            style={{ animationDuration: `${SILENCE_MS}ms` }}
+          />
+        </div>
+      )}
     </form>
   )
 }

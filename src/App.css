@@ -233,6 +233,36 @@
   animation: mic-pulse 1.3s ease-in-out infinite;
 }
 
+/* Countdown to auto-submit: fills during a pause, resets while you talk. */
+.mic-countdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.mic-countdown-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  animation-name: mic-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes mic-countdown {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @keyframes mic-pulse {
   0%,
   100% {
