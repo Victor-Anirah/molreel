@@ -6,6 +6,7 @@ import { StylePanel } from './StylePanel'
 import { AnimationControls } from './AnimationControls'
 import { SourceBar } from './SourceBar'
 import { AiBar } from './AiBar'
+import { MobileControls } from './MobileControls'
 import { Toasts, type Toast, type ToastKind } from './Toasts'
 import { downloadBlob, type ExportFormat } from './exporter'
 import {
@@ -20,6 +21,21 @@ import { sourceBaseName, type StructureSource } from './structureSource'
 const SPEED_MS: Record<string, number> = { slow: 8000, medium: 4000, fast: 2000 }
 const REP_VALUES = REPRESENTATIONS.map((r) => r.value) as string[]
 const COLOR_VALUES = COLOR_SCHEMES.map((c) => c.value) as string[]
+
+/** Tracks whether we're on a phone-width screen. */
+function useIsMobile() {
+  const query = '(max-width: 760px)'
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
 
 /** Small molecule glyph used as the brand mark. */
 function LogoMark() {
@@ -51,7 +67,9 @@ function App() {
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [sheetOpen, setSheetOpen] = useState(false)
 
+  const isMobile = useIsMobile()
   const viewerRef = useRef<MoleculeViewerHandle>(null)
 
   const notify = useCallback((message: string, kind: ToastKind = 'info') => {
@@ -145,6 +163,22 @@ function App() {
     }
   }
 
+  const stylePanel = <StylePanel scene={scene} onChange={setScene} />
+  const animationControls = (
+    <AnimationControls
+      isPlaying={isPlaying}
+      onTogglePlay={() => setIsPlaying((p) => !p)}
+      animation={animation}
+      onChange={setAnimation}
+      maxEdge={maxEdge}
+      onMaxEdgeChange={setMaxEdge}
+      format={format}
+      onFormatChange={setFormat}
+      onExport={handleExport}
+      exportProgress={exportProgress}
+    />
+  )
+
   return (
     <div className="app">
       <header className="topbar">
@@ -161,7 +195,7 @@ function App() {
         loading={aiLoading}
       />
       <div className="body">
-        <StylePanel scene={scene} onChange={setScene} />
+        {!isMobile && stylePanel}
         <MoleculeViewer
           ref={viewerRef}
           source={source}
@@ -171,18 +205,24 @@ function App() {
           exportProgress={exportProgress}
         />
       </div>
-      <AnimationControls
-        isPlaying={isPlaying}
-        onTogglePlay={() => setIsPlaying((p) => !p)}
-        animation={animation}
-        onChange={setAnimation}
-        maxEdge={maxEdge}
-        onMaxEdgeChange={setMaxEdge}
-        format={format}
-        onFormatChange={setFormat}
-        onExport={handleExport}
-        exportProgress={exportProgress}
-      />
+
+      {!isMobile && animationControls}
+
+      {isMobile && (
+        <MobileControls
+          isPlaying={isPlaying}
+          onTogglePlay={() => setIsPlaying((p) => !p)}
+          onExport={handleExport}
+          exporting={exportProgress !== null}
+          open={sheetOpen}
+          onOpen={() => setSheetOpen(true)}
+          onClose={() => setSheetOpen(false)}
+        >
+          {stylePanel}
+          {animationControls}
+        </MobileControls>
+      )}
+
       <Toasts toasts={toasts} onDismiss={dismissToast} />
       <Analytics />
     </div>

@@ -735,23 +735,21 @@
 }
 
 /* =====================================================================
-   Mobile / narrow screens — stack vertically and let the page scroll,
-   with the Play/Export bar pinned to the bottom.
+   Mobile / narrow screens — full-bleed viewer, slim top chrome, with a
+   floating action bar and a slide-up bottom sheet for the controls.
    ===================================================================== */
 @media (max-width: 760px) {
   .app {
-    height: auto;
-    min-height: 100dvh;
+    height: 100dvh;
   }
 
-  /* Top bar: brand on its own row, source controls fill the width. */
   .topbar {
-    padding: 0.7rem 1rem;
-    gap: 0.6rem 1rem;
+    padding: 0.55rem 0.9rem;
+    gap: 0.5rem 0.9rem;
   }
   .sourcebar {
     width: 100%;
-    gap: 0.55rem 0.9rem;
+    gap: 0.5rem 0.8rem;
   }
   .loader {
     flex-wrap: wrap;
@@ -763,10 +761,9 @@
     min-width: 0;
   }
 
-  /* AI bar: input full width, mic + generate split the next row. */
   .aibar {
     flex-wrap: wrap;
-    padding: 0.6rem 1rem;
+    padding: 0.5rem 0.9rem;
     gap: 0.5rem;
   }
   .aibar-spark {
@@ -781,31 +778,154 @@
     justify-content: center;
   }
 
-  /* Stack the viewer above a full-width styling panel. */
-  .body {
-    flex-direction: column;
-  }
+  /* Viewer fills the rest; the floating bar + sheet overlay it. */
   .viewer-wrap {
-    flex: 0 0 auto;
-    height: 46vh;
-    min-height: 280px;
+    min-height: 0;
   }
-  .sidebar {
-    flex: 0 0 auto;
-    width: 100%;
-    overflow: visible;
-    border-right: none;
-    border-top: 1px solid var(--border);
-    padding-bottom: 7rem; /* clear the pinned control bar */
-  }
+}
 
-  /* Pin Play/Export to the bottom so they're always reachable. */
-  .controlbar {
-    position: sticky;
-    bottom: 0;
-    gap: 0.5rem 0.9rem;
+/* ---- Mobile floating action bar (rendered only on mobile) ---- */
+.m-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+  z-index: 30;
+}
+
+.m-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.m-tool:disabled {
+  opacity: 0.5;
+}
+
+.m-tool--primary {
+  padding: 0.65rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-accent);
+}
+
+/* ---- Bottom sheet ---- */
+.m-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 19, 17, 0.42);
+  z-index: 35;
+  animation: m-fade 0.2s ease;
+}
+
+.m-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  max-height: 82dvh;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 34px rgba(13, 26, 23, 0.2);
+  animation: m-sheet-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.m-sheet-head {
+  position: relative;
+  flex: 0 0 auto;
+  padding-top: 0.5rem;
+}
+
+.m-handle {
+  width: 2.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  margin: 0 auto;
+}
+
+.m-sheet-close {
+  position: absolute;
+  right: 0.6rem;
+  top: 0.3rem;
+  display: inline-flex;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.m-sheet-body {
+  overflow-y: auto;
+  padding: 0.6rem 1.1rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+
+/* Reused desktop panels, neutralized to look native inside the sheet. */
+.m-sheet-body .sidebar {
+  flex: none;
+  width: 100%;
+  border: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.m-sheet-body .controlbar {
+  position: static;
+  flex-wrap: wrap;
+  gap: 0.7rem 1rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Play/Export live in the floating bar — hide the duplicates in the sheet. */
+.m-sheet-body .play-btn,
+.m-sheet-body .export-btn,
+.m-sheet-body .control-spacer {
+  display: none;
+}
+
+@keyframes m-sheet-up {
+  from {
+    transform: translateY(100%);
   }
-  .control-spacer {
-    display: none;
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
